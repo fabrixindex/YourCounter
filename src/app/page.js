@@ -1,103 +1,201 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { DateTime } from "luxon";
+import TimePicker from "react-time-picker";
+import { DayPicker } from "react-day-picker";
+import { useRouter } from "next/navigation";
+import 'react-time-picker/dist/TimePicker.css'; 
+import 'react-clock/dist/Clock.css';
+import 'react-day-picker/dist/style.css';
+
+export default function CounterForm() {
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [selectedDay, setSelectedDay] = useState(new Date());
+  const [time, setTime] = useState("12:00");
+  const [timezone, setTimezone] = useState("America/Argentina/Buenos_Aires");
+  const [counterLink, setCounterLink] = useState("");
+
+  const timezones = [
+    { label: "🇦🇷 Argentina (Buenos Aires)", value: "America/Argentina/Buenos_Aires" },
+    { label: "🇲🇽 México (Ciudad de México)", value: "America/Mexico_City" },
+    { label: "🇨🇱 Chile (Santiago)", value: "America/Santiago" },
+    { label: "🇨🇴 Colombia (Bogotá)", value: "America/Bogota" },
+    { label: "🇵🇪 Perú (Lima)", value: "America/Lima" },
+    { label: "🇺🇾 Uruguay (Montevideo)", value: "America/Montevideo" },
+    { label: "🇵🇾 Paraguay (Asunción)", value: "America/Asuncion" },
+    { label: "🇻🇪 Venezuela (Caracas)", value: "America/Caracas" },
+    { label: "🇪🇨 Ecuador (Quito)", value: "America/Guayaquil" },
+    { label: "🇬🇹 Guatemala (Ciudad de Guatemala)", value: "America/Guatemala" },
+    { label: "🇭🇳 Honduras (Tegucigalpa)", value: "America/Tegucigalpa" },
+    { label: "🇳🇮 Nicaragua (Managua)", value: "America/Managua" },
+    { label: "🇸🇻 El Salvador (San Salvador)", value: "America/El_Salvador" },
+    { label: "🇧🇷 Brasil (São Paulo)", value: "America/Sao_Paulo" },
+    { label: "🇨🇦 Canadá (Toronto)", value: "America/Toronto" },
+    { label: "🇺🇸 EE.UU. (Nueva York)", value: "America/New_York" },
+    { label: "🇨🇷 Costa Rica (San José)", value: "America/Costa_Rica" },
+    { label: "🇨🇺 Cuba (La Habana)", value: "America/Havana" },
+    { label: "🇩🇴 República Dominicana (Santo Domingo)", value: "America/Santo_Domingo" },
+    { label: "🇵🇦 Panamá (Ciudad de Panamá)", value: "America/Panama" },
+    { label: "🇧🇴 Bolivia (La Paz)", value: "America/La_Paz" },
+    { label: "🇧🇿 Belice (Belmopán)", value: "America/Belize" },
+    { label: "🇪🇸 España (Madrid)", value: "Europe/Madrid" },
+    { label: "🇬🇧 Reino Unido (Londres)", value: "Europe/London" },
+  ];
+
+  const createCounter = async () => {
+    if (!name || !selectedDay || !time) {
+      return alert("Completa todos los campos.");
+    }
+  
+    const [hours, minutes] = time.split(":").map(Number);
+    const dateTime = DateTime.fromJSDate(selectedDay)
+      .set({ hour: hours, minute: minutes, second: 0, millisecond: 0 })
+      .setZone(timezone);
+  
+    try {
+      const response = await fetch(`/api/counters`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          endTime: dateTime.toISO(),
+          timezone
+        })
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok) {
+        const link = `${window.location.origin}/c/${result.id}`;
+        setCounterLink(link);
+        alert("Contador creado exitosamente!");
+      } else {
+        alert(result.error || "Error al crear el contador");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión con el servidor");
+    }
+  };
+  
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(counterLink);
+    alert("Link copiado al portapapeles!");
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="styleForm">
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
+      {/* Botones de redirección */}
+      <button onClick={() => router.push("/auth/login")}>
+        Ir a Login
+      </button>
+      <button onClick={() => router.push("/auth/register")}>
+        Ir a Registro
+      </button>
+
+      <h2 className="styleMainTitle">Crear Contador</h2>
+
+      <div className="styleField">
+        <label className="styleLabel">Nombre del evento</label>
+        <input
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          className="styleInput"
+          required
+        />
+      </div>
+
+      <div className="styleField">
+        <label className="styleLabel">Fecha</label>
+          <DayPicker
+          mode="single"
+          selected={selectedDay}
+          onSelect={setSelectedDay}
+          disabled={{ before: new Date() }}
+        />
+        <p>Fecha seleccionada: {selectedDay?.toLocaleDateString()}</p>
+      </div>
+
+      <div className="styleField">
+        <label className="styleLabel">Hora (24h)</label>
+        <TimePicker
+          onChange={setTime}
+          value={time}
+          format="HH:mm"
+          disableClock={false}
+          clearIcon={null}
+          clockIcon={<span>🕒</span>}
+        />
+      </div>
+
+      <div className="styleField">
+        <label className="styleLabel">Zona horaria</label>
+        <select
+          value={timezone}
+          onChange={e => setTimezone(e.target.value)}
+          className="styleInput"
+        >
+          {timezones.map(tz => (
+            <option key={tz.value} value={tz.value}>{tz.label}</option>
+          ))}
+        </select>
+      </div>
+
+      <button
+        onClick={createCounter}
+        style={{
+          marginTop: "20px", fontSize: "1.5rem", padding: "10px 30px",
+          borderRadius: "10px", border: "none", cursor: "pointer",
+          backgroundColor: "#4f46e5", color: "#fff", fontWeight: "bold",
+          transition: "0.3s"
+        }}
+        onMouseOver={e => e.currentTarget.style.backgroundColor = "#3730a3"}
+        onMouseOut={e => e.currentTarget.style.backgroundColor = "#4f46e5"}
+      >
+        Crear contador
+      </button>
+
+      {counterLink && (
+        <div style={{
+          marginTop: "20px", padding: "15px 20px", background: "#fff",
+          borderRadius: "10px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+          textAlign: "center"
+        }}>
+          <p style={{ margin: "0 0 10px", fontSize: "1.2rem", color: "#333" }}>
+            Enlace a tu contador:
+          </p>
           <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            href={counterLink}
+            style={{
+              color: "#2563eb", fontSize: "1.2rem",
+              textDecoration: "underline", wordBreak: "break-all"
+            }}
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
+            {counterLink}
           </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <br />
+          <button
+            onClick={copyLink}
+            style={{
+              marginTop: "10px", fontSize: "1rem", padding: "5px 15px",
+              borderRadius: "8px", border: "none", cursor: "pointer",
+              backgroundColor: "#10b981", color: "#fff", fontWeight: "bold"
+            }}
+            onMouseOver={e => e.currentTarget.style.backgroundColor = "#059669"}
+            onMouseOut={e => e.currentTarget.style.backgroundColor = "#10b981"}
           >
-            Read our docs
-          </a>
+            Copiar link
+          </button>
+
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
 }
