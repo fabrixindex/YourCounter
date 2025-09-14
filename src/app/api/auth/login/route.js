@@ -33,10 +33,20 @@ export async function POST(req) {
     );
 
     return new Response(
-      JSON.stringify({
-        token,
-        user: { id: user._id, name: user.name, timezone: user.timezone, country: user.country }
-      }),
+      JSON.stringify(
+        {
+          message: "Login successful",
+          token: token,
+          user: {
+            id: user._id,
+            name: user.name,
+            timezone: user.timezone,
+            country: user.country,
+          },
+        },
+        null,
+        2 
+      ),
       { status: 200 }
     );
 

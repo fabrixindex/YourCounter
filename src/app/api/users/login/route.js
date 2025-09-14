@@ -14,6 +14,5 @@ export async function POST(req) {
     return new Response(JSON.stringify({ error: "Contraseña incorrecta" }), { status: 401 });
   }
 
-  // Aquí podrías generar un JWT o cookie de sesión
   return new Response(JSON.stringify({ message: "Login exitoso", id: user._id }), { status: 200 });
 }

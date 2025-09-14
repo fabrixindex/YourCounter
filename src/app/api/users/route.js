@@ -10,7 +10,24 @@ export async function GET() {
     // Obtener todos los usuarios y excluir passwordHash
     const users = await User.find().select("-passwordHash").lean();
 
-    return new Response(JSON.stringify(users), { status: 200 });
+    return new Response(
+      JSON.stringify(
+        {
+          message: "Users retrieved successfully",
+          data: users.map(user => ({
+            id: user._id,
+            name: user.name,
+            timezone: user.timezone,
+            country: user.country,
+            counters: user.counters 
+          })),
+        },
+        null,
+        2 
+      ),
+      { status: 200 }
+    );
+    
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: "Error al obtener usuarios" }), { status: 500 });
@@ -49,7 +66,24 @@ export async function POST(req) {
 
     await user.save();
 
-    return new Response(JSON.stringify({ message: "Usuario creado correctamente", id: user._id }), { status: 201 });
+    return new Response(
+      JSON.stringify(
+        {
+          message: "User created successfully",
+          data: {
+            id: user._id,
+            name: user.name,
+            timezone: user.timezone,
+            country: user.country,
+            createdAt: user.createdAt
+          }
+        },
+        null,
+        2 
+      ),
+      { status: 201 }
+    );
+
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: "Error al crear el usuario" }), { status: 500 });
